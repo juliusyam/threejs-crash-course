@@ -148,13 +148,20 @@ function App() {
     if (intersects.length > 0) {
       const intersect = intersects[0];
 
-      console.log(intersect.face);
+      const { color } = intersect.object.geometry.attributes;
 
-      intersect.object.geometry.attributes.color.setX(intersect.face!.a, 1);
-      intersect.object.geometry.attributes.color.setX(intersect.face!.b, 1);
-      intersect.object.geometry.attributes.color.setX(intersect.face!.c, 1);
+      color.setX(intersect.face!.a, 0.1);
+      color.setY(intersect.face!.a, 0.5);
+      color.setZ(intersect.face!.a, 1);
 
-      intersect.object.geometry.attributes.color.needsUpdate = true;
+      color.setX(intersect.face!.b, 0.1);
+      color.setY(intersect.face!.b, 0.5);
+      color.setZ(intersect.face!.b, 1);
+
+      color.setX(intersect.face!.c, 0.1);
+      color.setY(intersect.face!.c, 0.5);
+      color.setZ(intersect.face!.c, 1);
+      color.needsUpdate = true;
     }
   }
 
@@ -180,7 +187,7 @@ function generatePlane(geometry: PlaneGeometry) {
   const colors: number[] = [];
 
   for(let i = 0; i < count; i++) {
-    colors.push(0, 1, 1);
+    colors.push(1, 0.19, 0.4);
   }
 
   geometry.setAttribute('color', new BufferAttribute(new Float32Array(colors), 3));

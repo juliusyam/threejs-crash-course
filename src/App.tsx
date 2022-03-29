@@ -1,18 +1,18 @@
 import './App.css'
 import {
-  BoxGeometry,
+  BoxGeometry, BufferAttribute,
   DirectionalLight,
   DoubleSide,
   Mesh,
   MeshBasicMaterial,
   MeshPhongMaterial,
   PerspectiveCamera,
-  PlaneGeometry,
+  PlaneGeometry, Raycaster,
   Scene,
   WebGLRenderer,
 } from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import {useEffect} from "react";
+import {useEffect, useRef, MouseEvent as ReactMouseEvent } from "react";
 import {useStateRef} from "./utilities/stateRef";
 import {GUI} from 'dat.gui';
 
@@ -31,6 +31,7 @@ function App() {
     }
   };
 
+  const raycaster = new Raycaster();
   const scene = new Scene();
   const camera = new PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
 
@@ -47,6 +48,7 @@ function App() {
     color: 0xFF0000,
     side: DoubleSide,
     flatShading: true,
+    vertexColors: true,
   });
 
   const mesh = new Mesh(boxGeometry, material);
@@ -56,6 +58,11 @@ function App() {
   const backLight = new DirectionalLight(0xffffff, 1);
 
   generatePlane(planeMesh.geometry);
+
+  const mouse = useRef<{ x: number, y: number }>({
+    x: 0,
+    y: 0,
+  });
 
   function animate() {
     requestAnimationFrame(animate);
@@ -131,8 +138,28 @@ function App() {
     });
   });
 
+  const handleMouseMove = (event: ReactMouseEvent<HTMLDivElement | MouseEvent>) => {
+    mouse.current.x = (event.clientX / innerWidth) * 2 - 1;
+    mouse.current.y = -(event.clientY / innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera({ x: mouse.current.x, y: mouse.current.y }, camera);
+    const intersects = raycaster.intersectObject(planeMesh);
+
+    if (intersects.length > 0) {
+      const intersect = intersects[0];
+
+      console.log(intersect.face);
+
+      intersect.object.geometry.attributes.color.setX(intersect.face!.a, 1);
+      intersect.object.geometry.attributes.color.setX(intersect.face!.b, 1);
+      intersect.object.geometry.attributes.color.setX(intersect.face!.c, 1);
+
+      intersect.object.geometry.attributes.color.needsUpdate = true;
+    }
+  }
+
   return (
-    <div className="App" ref={divRef}/>
+    <div className="App" ref={divRef} onMouseMove={ handleMouseMove } />
   )
 }
 
@@ -140,7 +167,7 @@ export default App
 
 function generatePlane(geometry: PlaneGeometry) {
 
-  const { array } = geometry.attributes.position;
+  const { array, count } = geometry.attributes.position;
 
   for(let i = 0; i < array.length; i+=3) {
 
@@ -149,4 +176,12 @@ function generatePlane(geometry: PlaneGeometry) {
     // @ts-ignore
     array[i + 2] = z + Math.random();
   }
+
+  const colors: number[] = [];
+
+  for(let i = 0; i < count; i++) {
+    colors.push(0, 1, 1);
+  }
+
+  geometry.setAttribute('color', new BufferAttribute(new Float32Array(colors), 3));
 }
